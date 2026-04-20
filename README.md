@@ -17,3 +17,80 @@ The key idea:
 - Gates are passed through a **Sigmoid function** → value between 0 and 1
 - An **L1 sparsity penalty** pushes most gates toward zero
 - Weights with gate ≈ 0 are effectively **removed from the network**
+
+  ---
+
+  ##  Key Components
+
+### 1. PrunableLinear Layer
+A custom replacement for `nn.Linear` with learnable gate scores:
+```python
+gates         = sigmoid(gate_scores)     # between 0 and 1
+pruned_weight = weight * gates           # element-wise masking
+output        = x @ pruned_weight.T + bias
+```
+
+### 2. Loss Function
+Total Loss = CrossEntropyLoss + λ × Σ sigmoid(gate_scores)
+- **CrossEntropyLoss** → ensures the network classifies correctly
+- **λ × SparsityLoss** → pushes unnecessary gates toward zero
+- **λ (lambda)** → controls the sparsity vs accuracy trade-off
+
+### 3. Network Architecture
+Input (3072)
+
+↓
+
+PrunableLinear(3072 → 1024) + BatchNorm + ReLU
+
+↓
+
+PrunableLinear(1024 → 512)  + BatchNorm + ReLU
+
+↓
+
+PrunableLinear(512  → 256)  + BatchNorm + ReLU
+
+↓
+
+PrunableLinear(256  → 128)  + BatchNorm + ReLU
+
+↓
+
+PrunableLinear(128  → 10)
+
+↓
+
+Output (10 classes)
+
+## Results
+
+> Training: 30 epochs | Adam optimizer (lr=1e-3) | Batch size=256
+> Sparsity threshold: gate < 0.01 counted as pruned
+
+| Lambda (λ) | Test Accuracy (%) | Sparsity Level (%) |
+|:----------:|:-----------------:|:------------------:|
+| 1e-5       | 61.48             | 0.00              |
+| 1e-4       | 61.25             | 0.00              |
+| 1e-3       | 61.56             | 0.00              |
+
+### Key Observations
+- **Low λ (1e-5):** Weak penalty → most weights retained → highest accuracy
+- **Medium λ (1e-4):** Balanced trade-off → 61.25% weights pruned with small accuracy drop
+- **High λ (1e-3):** Strong penalty → 61.56% weights pruned → significant accuracy drop
+
+---
+
+## Gate Value Distribution
+
+The plot below shows the distribution of final gate values after training.
+A successful pruning result shows:
+- A large spike near **0** (pruned weights)
+- A smaller cluster near **0.5–1.0** (retained weights)
+
+<img width="1600" height="425" alt="gate_distribution" src="https://github.com/user-attachments/assets/31986304-f85e-4a2b-abdc-838c29271bbd" />
+
+
+---
+
+
