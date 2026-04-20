@@ -88,7 +88,8 @@ A successful pruning result shows:
 - A large spike near **0** (pruned weights)
 - A smaller cluster near **0.5–1.0** (retained weights)
 
-<img width="1600" height="425" alt="gate_distribution" src="https://github.com/user-attachments/assets/31986304-f85e-4a2b-abdc-838c29271bbd" />
+<img width="1600" height="425" alt="image" src="https://github.com/user-attachments/assets/f7f48782-9d32-418a-9198-df8f9cc9426c" />
+
 
 
 ---
